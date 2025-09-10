@@ -44,7 +44,8 @@ def structured_constant_export(path: str, header_lines: int = 0, columns: list =
     # Transforma as colunas em uma tupla de tuplas
     structured_constant_list = tuple(structured_constant.itertuples(index=False, name=None))
     
-    # Exporta para um arquivo Python
+    # Exporta para um arquivo Python, se não existir a pasta e o arquivo, cria
+    os.makedirs(os.path.dirname(path_export), exist_ok=True)
     with open(path_export, 'w', encoding='utf-8') as file:
         file.write(f"STRUCTURED_CONSTANT = {structured_constant_list}\n")
         file.write("")
@@ -52,6 +53,43 @@ def structured_constant_export(path: str, header_lines: int = 0, columns: list =
     print(f"Constante estruturada exportada para {path_export} com sucesso. 🚀")
     print("")
     print("")
+    
+
+def header_constant_export(path: str, header_lines: int = 0) -> None:
+    """
+    Utiliza dados de uma tabela para pegar o cabeçalho e exportá-lo para um arquivo Python com
+    uma contante da seguinte forma: [coluna1, coluna2, coluna3, ...].
+
+    Parameters:
+    - path (str): The file path where is the CSV.
+    - header_lines (int): Number of header lines to include in the CSV file.
+
+    Returns:
+    - None
+    """
+    print("")
+    print("Exportando constante de cabeçalho...")
+    path_export = "./export/constants/header_constants.py"
+    
+    # Se for um arquivo .xls ou .xlsx, leia com pd.read_excel
+    if path.endswith('.xls') or path.endswith('.xlsx'):
+        df = pd.read_excel(path, header=header_lines)
+    else:
+        df = pd.read_csv(path, header=header_lines)
+        
+    # Pega os cabeçalhos
+    header_constant = list(df.columns)
+    
+    # Exporta para um arquivo Python, se não existir a pasta e o arquivo, cria
+    os.makedirs(os.path.dirname(path_export), exist_ok=True)
+    with open(path_export, 'w', encoding='utf-8') as file:
+        file.write(f"HEADER_CONSTANT = {header_constant}\n")
+        file.write("")
+    
+    print(f"Constante de cabeçalho exportada para {path_export} com sucesso. 🚀")
+    print("")
+    print("")
+
 
 response = ""
 while response != "0":
@@ -65,6 +103,7 @@ while response != "0":
     print("--------------------------------------------")
     print("")
     print("1. Exportar constante estruturada - TUPLA DE TUPLAS")
+    print("2. Exportar constante cabeçalho - Lista de strings")
     print("0. Sair")
     response = input("Escolha uma opção: ")
     
@@ -95,6 +134,29 @@ while response != "0":
         
         try:
             structured_constant_export(full_path, header_lines, columns)
+        except Exception as e:
+            print(f"Ocorreu um erro: {e}")
+    elif response == "2":
+        clear()
+        path = "./import"
+        file_name = input("Digite o nome do arquivo de planilha (com extensão): ")
+        full_path = f"{path}/{file_name}"
+        
+        # Verifica se o arquivo existe
+        if not os.path.isfile(full_path):
+            print("Arquivo não encontrado. Verifique o nome e a extensão.")
+            continue
+        
+        try:
+            header_lines = int(input("Número da linha de cabeçalho (padrão 0): ") or "0")
+        except ValueError:
+            print("Entrada inválida. Usando linha 0 de cabeçalho. Cancelar? (s/n): ")
+            if input().strip().lower() == "s":
+                continue
+            header_lines = 0
+        
+        try:
+            header_constant_export(full_path, header_lines)
         except Exception as e:
             print(f"Ocorreu um erro: {e}")
     elif response == "0":
